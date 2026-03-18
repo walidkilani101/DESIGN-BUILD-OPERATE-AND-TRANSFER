@@ -1,0 +1,114 @@
+# DBOT Supply Chain Analytics — Revised Plan
+
+## Key Research Findings
+
+**OCP Solutions** (Casablanca, est. 2018) is the analytics consulting arm of OCP Group (world's largest phosphate producer). Their method is literally called **D-B-O-T: Design → Build → Operate → Transfer** — your project folder name matches exactly.
+
+Their core capabilities from [ocpsolutions.ma](https://ocpsolutions.ma):
+1. **Operations Research** — optimization models for scheduling, inventory, distribution
+2. **Machine Learning** — classification/prediction for decision support
+3. **Industry 4.0 / Digital Transformation** — applied to supply chain
+
+Their flagship achievement (published in [INFORMS](https://informs.org), the world's top OR journal):
+- **PSIMVA** = Production Scheduling, Inventory Management & Vessel Assignment
+- Method: Mixed-Integer Linear Programming (MILP) + hybrid Benders Decomposition
+- Result: **+$240M annual turnover** for OCP Group
+
+---
+
+## What Aligns With Your Data
+
+| Model | Data Fit | OCP Alignment | Verdict |
+|---|---|---|---|
+| **TOPSIS Supplier Ranking** (OR) | ✅ Strong — 100 suppliers, real costs, real delivery delays | ✅ OR optimization is their core | **Do this** |
+| **Late Delivery Risk Classifier** (ML) | ✅ Strongest — 20K rows, labeled target variable | ✅ ML for decision support is their 2nd pillar | **Do this** |
+| **Game Theory Pricing** | ❌ No competitor data exists | ⚠️ Not their focus area | **Drop** |
+| **Production Scheduling (MILP)** | ⚠️ Lack production capacity data | ✅ This is their flagship | Not feasible with current data |
+| **Prescriptive Discount Optimization (OR)** | ✅ Strongest — real prices, COGS, discounts, and quantities | ✅ Hybrid ML + Constrained Optimization is heavily used | **Added (Model C)** |
+
+---
+
+## Proposed Scope (3 Models)
+
+### Model A: Category Performance — TOPSIS Method (Operations Research)
+**Business question:** *Rank product categories by overall operational performance to decide resource allocation.*
+
+**What is TOPSIS:**  (Hwang & Yoon, 1981) — ranks alternatives by geometric distance to the ideal best and ideal worst solutions.
+
+**Criteria from DataCo Dataset:**
+1. **Average Profit Ratio** — `Order Item Profit Ratio` (Maximize)
+2. **Average Delivery Delay (days)** — `Days for shipping (real) - Days for shipment (scheduled)` (Minimize)
+3. **Total Sales Volume** — `Sales` (Maximize)
+4. **Average Discount Rate** — `Order Item Discount Rate` (Minimize)
+5. **On-Time Rate** — Inverse of `Late_delivery_risk` (Maximize)
+
+**Output:** Ranked table of categories with TOPSIS scores. Ready for slides.
+
+**SOTA validation:** Weights sensitivity analysis (how do rankings shift if we prioritize cost vs reliability?)
+
+---
+
+### Model B: Late Delivery Risk — Logistic Regression + Decision Tree (Machine Learning)
+**Business question:** *Which factors drive late deliveries, and can we predict them?*
+
+**Target variable:** `Late_delivery_risk` (binary: 0 or 1)
+
+**Features from DataCo Dataset:**
+- `Shipping Mode` (Standard Class, First Class, etc.)
+- `Order Region` and `Order Country`
+- `Order Item Quantity`
+- `Order Item Discount Rate`
+- `Category Name`
+- `Customer Segment`
+
+**Methods:**
+- Logistic Regression (interpretable, coefficients show direction and magnitude)
+- Decision Tree (visual, shows exact decision rules the client can act on)
+
+**SOTA Metrics:**
+- Accuracy, Precision, Recall, F1-Score
+- AUC-ROC Curve
+- Confusion Matrix
+- Cross-validation (5-fold) to ensure generalization
+
+> [!IMPORTANT]
+> Logistic regression coefficients tell you "a 1-unit increase in X is associated with Y% change in odds of late delivery." This is **association**, not causation — important distinction for your slides.
+
+**Output:** Feature coefficient table + decision tree diagram + metrics scorecard.
+
+---
+
+### Model C: Prescriptive Discount Optimization (Revenue Management)
+**Business question:** *What exact discount percentage should we offer per product category to mathematically maximize total profit?*
+
+**How this combines Data Science and Operations Research:**
+1. **Data Science (Demand Modeling):** We use Log-Log regression on [DataCoSupplyChainDataset.csv](file:///c:/Users/samsung/Desktop/DESIGN-BUILD-OPERATE-AND-TRANSFER/archive%20%281%29/DataCoSupplyChainDataset.csv) to learn the **Price Elasticity of Demand** for each category. (i.e., mapping `Order Item Discount Rate` to `Order Item Quantity`).
+2. **Operations Research (Constrained Optimization):** We use mathematical solvers (`scipy.optimize`) to find the exact point on the Profit Curve where revenue growth outpaces margin loss, strictly checking p-values.
+
+**Mathematical Formulation:**
+- **Maximize:** $\sum \text{Profit} = (\text{Base Quantity} + \beta \times \text{Discount}) \times (\text{Unit Price} \times (1 - \text{Discount}) - \text{COGS})$
+- **Subject to bounds:** $0 \% \le \text{Discount} \le 30 \%$
+
+**Output:** Table of current vs optimal discounts per category, projected profit increases, and smooth profit curve charts visually proving the mathematical maximum.
+
+---
+
+### Phase 4, 5 & 6: Business Transfer & Power BI Star Schema
+**Business question:** *How do we transfer predictive models to a CEO or Operations Manager?*
+
+**How this finalizes the DBOT pipeline:**
+1. **Strategic Quadrant:** Translates Risk and Margin into a BCG matrix to show exactly which categories to "Scale" vs "Kill".
+2. **Financial ROI Translator:** Converts the 89% ML Precision into millions of dollars in net savings using a waterfall chart.
+3. **Power BI Star Schema:** Normalizes the massive 180,000-order CSV into an industry-standard SQL-ready schema containing:
+   - `Fact_Orders`: Contains the base order data + XGBoost ML probabilities + Optimal Discount percentages.
+   - `Dim_Customers`: Dimensional lookup for regions and segments.
+   - `Dim_Products`: Dimensional lookup holding the TOPSIS Priority rankings.
+   - `Dim_Geography`: Dimensional lookup for dynamic Power BI globe maps.
+
+---
+
+## Deliverable Format
+- All results exported as clean [.csv](file:///c:/Users/samsung/Desktop/DESIGN-BUILD-OPERATE-AND-TRANSFER/Raw-data/sales_orders.csv) tables
+- Charts saved as [.png](file:///c:/Users/samsung/Desktop/DESIGN-BUILD-OPERATE-AND-TRANSFER/Supply-Chain-Resilience-Simulation/outputs/chart_topsis_top15.png) (matplotlib/seaborn)
+- Ready to copy-paste into PowerPoint slides
+- No maps, no 3D, no web servers
